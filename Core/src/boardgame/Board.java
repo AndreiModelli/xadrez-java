@@ -41,4 +41,13 @@ public class Board {
     public boolean thereIsAPiece(Position position) {
         return positionExists(position) && piece(position) != null;
     }
+
+    public int getRows() {
+        return rows;
+    }
+
+    public int getColumns() {
+        return columns;
+    }
+
 }

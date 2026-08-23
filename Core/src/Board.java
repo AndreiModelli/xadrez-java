@@ -1,3 +1,5 @@
+package boardgame;
+
 public class Board {
     private int rows = 8;
     private int columns = 8;

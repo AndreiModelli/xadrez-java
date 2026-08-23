@@ -6,97 +6,211 @@ import boardgame.Position;
 import chess.ChessMatch;
 import chess.Color;
 
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
 public class Program {
 
     public static void main(String[] args) {
-        System.out.println("==================================================");
-        System.out.println(" INICIANDO BATERIA DE TESTES DO MOTOR (PESSOA 2) ");
-        System.out.println("==================================================");
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n=================================");
+            System.out.println("       SISTEMA DE XADREZ        ");
+            System.out.println("=================================");
+            System.out.println("1 - Iniciar Partida (Jogar)");
+            System.out.println("2 - Executar Bateria de Testes");
+            System.out.println("0 - Sair");
+            System.out.print("Escolha uma opcao: ");
+
+            String option = sc.nextLine().trim();
+
+            if (option.equals("1")) {
+                playGame(sc);
+            } else if (option.equals("2")) {
+                runTests();
+            } else if (option.equals("0")) {
+                System.out.println("Encerrando o programa...");
+                break;
+            } else {
+                System.out.println("Opcao invalida. Tente novamente.");
+            }
+        }
+
+        sc.close();
+    }
+
+    // =========================================================================
+    // MODO JOGO
+    // =========================================================================
+    private static void playGame(Scanner sc) {
+        ChessMatch chessMatch = new ChessMatch();
+
+        while (!chessMatch.isCheckMate()) {
+            try {
+                printMatch(chessMatch);
+
+                System.out.print("\nOrigem (ex: e2): ");
+                Position source = readPosition(sc);
+
+                System.out.print("Destino (ex: e4): ");
+                Position target = readPosition(sc);
+
+                Piece capturedPiece = chessMatch.performChessMove(source, target);
+
+                if (capturedPiece != null) {
+                    System.out.println("Peca capturada: " + capturedPiece);
+                }
+
+            } catch (Exception e) {
+                System.out.println("\n[ERRO] " + e.getMessage());
+                System.out.println("Pressione Enter para tentar novamente...");
+                sc.nextLine();
+            }
+        }
+
+        printMatch(chessMatch);
+        System.out.println("\nXEQUE-MATE! Vencedor: " + chessMatch.getCurrentPlayer());
+        System.out.println("Pressione Enter para voltar ao menu...");
+        sc.nextLine();
+    }
+
+    private static Position readPosition(Scanner sc) {
+        String s = sc.nextLine().trim().toLowerCase();
+        if (s.length() < 2) {
+            throw new InputMismatchException("Formato invalido. Use notacao algebrica (ex: e2, a7).");
+        }
+        char columnChar = s.charAt(0);
+        int rowNum = Character.getNumericValue(s.charAt(1));
+
+        int row = 8 - rowNum;
+        int column = columnChar - 'a';
+
+        return new Position(row, column);
+    }
+
+    private static void printMatch(ChessMatch chessMatch) {
+        Board board = chessMatch.getBoard();
+        System.out.println("\n---------------------------------");
+        for (int i = 0; i < board.getRows(); i++) {
+            System.out.print((8 - i) + " ");
+            for (int j = 0; j < board.getColumns(); j++) {
+                Piece piece = board.piece(i, j);
+                if (piece == null) {
+                    System.out.print(" - ");
+                } else {
+                    String symbol = piece.toString();
+                    if (piece.getColor() == Color.BLACK) {
+                        System.out.print(" " + symbol.toLowerCase() + " ");
+                    } else {
+                        System.out.print(" " + symbol.toUpperCase() + " ");
+                    }
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("   a  b  c  d  e  f  g  h");
+        System.out.println("---------------------------------");
+        System.out.println("Turno: " + chessMatch.getTurn());
+        System.out.println("Vez do jogador: " + chessMatch.getCurrentPlayer());
+
+        if (chessMatch.isCheck()) {
+            System.out.println(">>> ATENCAO: VOCE ESTA EM XEQUE! <<<");
+        }
+    }
+
+    // =========================================================================
+    // MODO TESTES
+    // =========================================================================
+    private static void runTests() {
+        System.out.println("\n--- INICIANDO TESTES DO MOTOR ---");
 
         testInitialBoard();
         testTurnAlternationAndWrongPiece();
         testSelfCheckPrevention();
-        testScholarCheckmate();
+        testFoolCheckmate();
 
-        System.out.println("\n[SUCESSO] Todos os testes do motor passaram!");
+        System.out.println("\n[SUCESSO] Todos os testes passaram sem falhas!");
     }
 
-    // Teste 1: Tabuleiro Inicial
     private static void testInitialBoard() {
-        System.out.print("\n[TESTE 1] Estado inicial do tabuleiro: ");
+        System.out.print("1. Estado inicial do tabuleiro: ");
         ChessMatch match = new ChessMatch();
-        assert match.getTurn() == 1 : "Turno inicial deveria ser 1";
-        assert match.getCurrentPlayer() == Color.WHITE : "Primeiro jogador deveria ser BRANCO";
-        assert !match.isCheck() : "Jogo não deveria iniciar em xeque";
-        assert !match.isCheckMate() : "Jogo não deveria iniciar em xeque-mate";
-        System.out.println("PASSED ✓");
-    }
-
-    // Teste 2: Alternância de Turnos e Validação de Peça Oposta
-    private static void testTurnAlternationAndWrongPiece() {
-        System.out.print("[TESTE 2] Alternância de turnos e bloqueio de peça inimiga: ");
-        ChessMatch match = new ChessMatch();
-
-        // Tentar mover peça preta na vez das brancas (deve falhar)
-        boolean errorThrown = false;
-        try {
-            match.performChessMove(new Position(1, 4), new Position(3, 4)); // e7 -> e5
-        } catch (RuntimeException e) {
-            errorThrown = true;
+        if (match.getTurn() != 1 || match.getCurrentPlayer() != Color.WHITE || match.isCheck() || match.isCheckMate()) {
+            throw new AssertionError("Falha no estado inicial.");
         }
-        assert errorThrown : "Deveria lançar erro ao tentar mover peça preta no turno 1";
-
-        // Mover peão branco e2 -> e4 (6,4 -> 4,4)
-        match.performChessMove(new Position(6, 4), new Position(4, 4));
-        assert match.getTurn() == 2 : "Turno deveria avançar para 2";
-        assert match.getCurrentPlayer() == Color.BLACK : "Jogador atual deveria ser PRETO";
-        System.out.println("PASSED ✓");
+        System.out.println("OK");
     }
 
-    // Teste 3: Impedir Jogada que Deixa o Rei em Xeque (Auto-Xeque)
-    private static void testSelfCheckPrevention() {
-        System.out.print("[TESTE 3] Impedimento de Auto-Xeque (Rollback): ");
+    private static void testTurnAlternationAndWrongPiece() {
+        System.out.print("2. Turnos e bloqueio de peca inimiga: ");
         ChessMatch match = new ChessMatch();
 
-        // 1. e4 (6,4 -> 4,4) / e5 (1,4 -> 3,4)
-        match.performChessMove(new Position(6, 4), new Position(4, 4));
-        match.performChessMove(new Position(1, 4), new Position(3, 4));
-
-        // 2. Qh5 (7,3 -> 3,7) / d6 (1,3 -> 2,3)
-        match.performChessMove(new Position(7, 3), new Position(3, 7));
-        match.performChessMove(new Position(1, 3), new Position(2, 3));
-
-        // 3. Qxf7+ (3,7 -> 1,5) - Dama branca coloca o Rei preto em Xeque
-        match.performChessMove(new Position(3, 7), new Position(1, 5));
-        assert match.isCheck() : "Rei preto deveria estar em xeque";
-
-        // Tentar mover peão a7 -> a6 enquanto está em xeque (deve falhar e desmanchar a
-        // jogada)
         boolean blocked = false;
         try {
-            match.performChessMove(new Position(1, 0), new Position(2, 0));
+            // Tentar mover preta no turno 1
+            match.performChessMove(new Position(1, 4), new Position(3, 4));
         } catch (RuntimeException e) {
             blocked = true;
         }
-        assert blocked : "Movimento irrelevante durante xeque deveria ser bloqueado";
-        System.out.println("PASSED ✓");
+        if (!blocked) {
+            throw new AssertionError("Deveria bloquear peca preta no turno 1.");
+        }
+
+        // Mover peao branco e2 -> e4
+        match.performChessMove(new Position(6, 4), new Position(4, 4));
+        if (match.getTurn() != 2 || match.getCurrentPlayer() != Color.BLACK) {
+            throw new AssertionError("Falha na alternancia para o jogador PRETO.");
+        }
+        System.out.println("OK");
     }
 
-    // Teste 4: Xeque-Mate do Louco (Fool's Mate em 2 lances)
-    private static void testScholarCheckmate() {
-        System.out.print("[TESTE 4] Detecção de Xeque-Mate (Fool's Mate): ");
+    private static void testSelfCheckPrevention() {
+        System.out.print("3. Impedimento de Auto-Xeque (Rollback): ");
         ChessMatch match = new ChessMatch();
 
-        // 1. f3 (6,5 -> 5,5) / e5 (1,4 -> 3,4)
+        // 1. e4 / e5
+        match.performChessMove(new Position(6, 4), new Position(4, 4));
+        match.performChessMove(new Position(1, 4), new Position(3, 4));
+
+        // 2. Qh5 / d6
+        match.performChessMove(new Position(7, 3), new Position(3, 7));
+        match.performChessMove(new Position(1, 3), new Position(2, 3));
+
+        // 3. Qxf7+ (Xeque)
+        match.performChessMove(new Position(3, 7), new Position(1, 5));
+        if (!match.isCheck()) {
+            throw new AssertionError("Deveria acusar xeque.");
+        }
+
+        boolean prevented = false;
+        try {
+            // Lance invalido que nao tira do xeque
+            match.performChessMove(new Position(1, 0), new Position(2, 0));
+        } catch (RuntimeException e) {
+            prevented = true;
+        }
+        if (!prevented) {
+            throw new AssertionError("Deveria barrar jogadas que mantem o rei em xeque.");
+        }
+        System.out.println("OK");
+    }
+
+    private static void testFoolCheckmate() {
+        System.out.print("4. Deteccao de Xeque-Mate (Fool's Mate): ");
+        ChessMatch match = new ChessMatch();
+
+        // 1. f3 / e5
         match.performChessMove(new Position(6, 5), new Position(5, 5));
         match.performChessMove(new Position(1, 4), new Position(3, 4));
 
-        // 2. g4 (6,6 -> 4,6) / Qh4# (0,3 -> 4,7)
+        // 2. g4 / Qh4#
         match.performChessMove(new Position(6, 6), new Position(4, 6));
         match.performChessMove(new Position(0, 3), new Position(4, 7));
 
-        assert match.isCheck() : "Deveria acusar xeque";
-        assert match.isCheckMate() : "Deveria acusar xeque-mate no lance Qh4#";
-        System.out.println("PASSED ✓");
+        if (!match.isCheck() || !match.isCheckMate()) {
+            throw new AssertionError("Deveria acusar xeque e xeque-mate.");
+        }
+        System.out.println("OK");
     }
 }

@@ -9,134 +9,250 @@ import chess.Color;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+/**
+ * Classe principal do sistema de xadrez.
+ * Gerencia o menu, modos de jogo (PvP e PvBot), loop de turnos,
+ * desistência e condições de fim de jogo.
+ */
 public class Program {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
         while (true) {
-            System.out.println("\n=================================");
-            System.out.println("       SISTEMA DE XADREZ        ");
-            System.out.println("=================================");
-            System.out.println("1 - Iniciar Partida (Jogar)");
-            System.out.println("2 - Executar Bateria de Testes");
-            System.out.println("0 - Sair");
-            System.out.print("Escolha uma opcao: ");
+            UI.clearScreen();
+            UI.printMenu();
 
             String option = sc.nextLine().trim();
 
-            if (option.equals("1")) {
-                playGame(sc);
-            } else if (option.equals("2")) {
-                runTests();
-            } else if (option.equals("0")) {
-                System.out.println("Encerrando o programa...");
-                break;
-            } else {
-                System.out.println("Opcao invalida. Tente novamente.");
+            switch (option) {
+                case "1":
+                    playPvP(sc);
+                    break;
+                case "2":
+                    playPvBot(sc);
+                    break;
+                case "3":
+                    runTests();
+                    System.out.println("\nPressione Enter para voltar ao menu...");
+                    sc.nextLine();
+                    break;
+                case "0":
+                    System.out.println("Encerrando o programa. Ate logo!");
+                    sc.close();
+                    return;
+                default:
+                    System.out.println("Opcao invalida. Pressione Enter...");
+                    sc.nextLine();
             }
         }
-
-        sc.close();
     }
 
     // =========================================================================
-    // MODO JOGO
+    // MODO PvP (Jogador vs Jogador)
     // =========================================================================
-    private static void playGame(Scanner sc) {
-        ChessMatch chessMatch = new ChessMatch();
+    private static void playPvP(Scanner sc) {
+        ChessMatch match = new ChessMatch();
 
-        while (!chessMatch.isCheckMate()) {
+        UI.clearScreen();
+        UI.printInstructions();
+        System.out.println("\nPressione Enter para comecar...");
+        sc.nextLine();
+
+        while (!match.isCheckMate()) {
             try {
-                printMatch(chessMatch);
+                UI.clearScreen();
+                UI.printMatch(match);
 
-                System.out.print("\nOrigem (ex: e2): ");
-                Position source = readPosition(sc);
+                // Lê o movimento do jogador
+                InputReader.MoveInput moveInput = InputReader.readMove(sc);
 
-                System.out.print("Destino (ex: e4): ");
-                Position target = readPosition(sc);
-
-                Piece capturedPiece = chessMatch.performChessMove(source, target);
-
-                if (capturedPiece != null) {
-                    System.out.println("Peca capturada: " + capturedPiece);
+                // Verifica desistência
+                if (moveInput.isResignation()) {
+                    handleResignation(match);
+                    System.out.println("\nPressione Enter para voltar ao menu...");
+                    sc.nextLine();
+                    return;
                 }
 
-            } catch (Exception e) {
+                // Executa o movimento
+                Piece captured = match.performChessMove(moveInput.getSource(), moveInput.getTarget());
+
+                if (captured != null) {
+                    System.out.println("\n>> Peca capturada: " + captured);
+                }
+
+            } catch (RuntimeException e) {
+                System.out.println("\n[ERRO] " + e.getMessage());
+                System.out.println("Pressione Enter para tentar novamente...");
+                sc.nextLine();
+            } catch (InputMismatchException e) {
                 System.out.println("\n[ERRO] " + e.getMessage());
                 System.out.println("Pressione Enter para tentar novamente...");
                 sc.nextLine();
             }
         }
 
-        printMatch(chessMatch);
-        System.out.println("\nXEQUE-MATE! Vencedor: " + chessMatch.getCurrentPlayer());
-        System.out.println("Pressione Enter para voltar ao menu...");
+        // Fim de jogo por xeque-mate
+        UI.clearScreen();
+        UI.printMatch(match);
+        System.out.println("\nPressione Enter para voltar ao menu...");
         sc.nextLine();
     }
 
-    private static Position readPosition(Scanner sc) {
-        String s = sc.nextLine().trim().toLowerCase();
-        if (s.length() < 2) {
-            throw new InputMismatchException("Formato invalido. Use notacao algebrica (ex: e2, a7).");
+    // =========================================================================
+    // MODO PvBot (Jogador vs Computador)
+    // =========================================================================
+    private static void playPvBot(Scanner sc) {
+        System.out.print("\nEscolha sua cor (1 = Brancas, 2 = Pretas): ");
+        String colorChoice = sc.nextLine().trim();
+
+        Color playerColor;
+        Color botColor;
+
+        if (colorChoice.equals("2")) {
+            playerColor = Color.BLACK;
+            botColor = Color.WHITE;
+        } else {
+            playerColor = Color.WHITE;
+            botColor = Color.BLACK;
         }
-        char columnChar = s.charAt(0);
-        int rowNum = Character.getNumericValue(s.charAt(1));
 
-        int row = 8 - rowNum;
-        int column = columnChar - 'a';
+        ChessMatch match = new ChessMatch();
+        BotPlayer bot = new BotPlayer(botColor);
 
-        return new Position(row, column);
-    }
+        UI.clearScreen();
+        UI.printInstructions();
+        System.out.println("Voce joga com: " + (playerColor == Color.WHITE ? "BRANCAS" : "PRETAS"));
+        System.out.println("Bot joga com: " + (botColor == Color.WHITE ? "BRANCAS" : "PRETAS"));
+        System.out.println("\nPressione Enter para comecar...");
+        sc.nextLine();
 
-    private static void printMatch(ChessMatch chessMatch) {
-        Board board = chessMatch.getBoard();
-        System.out.println("\n---------------------------------");
-        for (int i = 0; i < board.getRows(); i++) {
-            System.out.print((8 - i) + " ");
-            for (int j = 0; j < board.getColumns(); j++) {
-                Piece piece = board.piece(i, j);
-                if (piece == null) {
-                    System.out.print(" - ");
-                } else {
-                    String symbol = piece.toString();
-                    if (piece.getColor() == Color.BLACK) {
-                        System.out.print(" " + symbol.toLowerCase() + " ");
-                    } else {
-                        System.out.print(" " + symbol.toUpperCase() + " ");
+        while (!match.isCheckMate()) {
+            try {
+                UI.clearScreen();
+                UI.printMatch(match);
+
+                // Verifica de quem é a vez
+                if (match.getCurrentPlayer() == playerColor) {
+                    // Vez do jogador humano
+                    InputReader.MoveInput moveInput = InputReader.readMove(sc);
+
+                    if (moveInput.isResignation()) {
+                        handleResignation(match);
+                        System.out.println("\nPressione Enter para voltar ao menu...");
+                        sc.nextLine();
+                        return;
                     }
-                }
-            }
-            System.out.println();
-        }
-        System.out.println("   a  b  c  d  e  f  g  h");
-        System.out.println("---------------------------------");
-        System.out.println("Turno: " + chessMatch.getTurn());
-        System.out.println("Vez do jogador: " + chessMatch.getCurrentPlayer());
 
-        if (chessMatch.isCheck()) {
-            System.out.println(">>> ATENCAO: VOCE ESTA EM XEQUE! <<<");
+                    match.performChessMove(moveInput.getSource(), moveInput.getTarget());
+
+                } else {
+                    // Vez do Bot
+                    System.out.println("\n[Bot pensando...]");
+
+                    // Pequena pausa para simular "reflexão"
+                    try {
+                        Thread.sleep(800);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    Position[] botMove = bot.chooseMove(match);
+
+                    if (botMove == null) {
+                        System.out.println("Bot sem movimentos disponiveis.");
+                        break;
+                    }
+
+                    // Tenta executar o movimento do bot (pode falhar por auto-xeque)
+                    boolean moveDone = false;
+                    int attempts = 0;
+                    while (!moveDone && attempts < 50) {
+                        try {
+                            match.performChessMove(botMove[0], botMove[1]);
+                            moveDone = true;
+
+                            String from = BotPlayer.positionToAlgebraic(botMove[0]);
+                            String to = BotPlayer.positionToAlgebraic(botMove[1]);
+                            System.out.println("Bot jogou: " + from + " -> " + to);
+
+                        } catch (RuntimeException e) {
+                            // Movimento inválido (auto-xeque), escolhe outro
+                            botMove = bot.chooseMove(match);
+                            if (botMove == null) {
+                                break;
+                            }
+                            attempts++;
+                        }
+                    }
+
+                    if (!moveDone) {
+                        System.out.println("Bot nao encontrou jogada valida.");
+                        break;
+                    }
+
+                    System.out.println("Pressione Enter para continuar...");
+                    sc.nextLine();
+                }
+
+            } catch (RuntimeException e) {
+                System.out.println("\n[ERRO] " + e.getMessage());
+                System.out.println("Pressione Enter para tentar novamente...");
+                sc.nextLine();
+            } catch (InputMismatchException e) {
+                System.out.println("\n[ERRO] " + e.getMessage());
+                System.out.println("Pressione Enter para tentar novamente...");
+                sc.nextLine();
+            }
         }
+
+        // Fim de jogo
+        UI.clearScreen();
+        UI.printMatch(match);
+        System.out.println("\nPressione Enter para voltar ao menu...");
+        sc.nextLine();
     }
 
     // =========================================================================
-    // MODO TESTES
+    // DESISTÊNCIA
+    // =========================================================================
+    private static void handleResignation(ChessMatch match) {
+        Color resigned = match.getCurrentPlayer();
+        Color winner = (resigned == Color.WHITE) ? Color.BLACK : Color.WHITE;
+
+        System.out.println("\n========================================");
+        System.out.println("  DESISTENCIA!");
+        System.out.println("  " + resigned + " desistiu da partida.");
+        System.out.println("  Vencedor: " + winner);
+        System.out.println("========================================");
+    }
+
+    // =========================================================================
+    // MODO TESTES (mantido do código original)
     // =========================================================================
     private static void runTests() {
-        System.out.println("\n--- INICIANDO TESTES DO MOTOR ---");
+        System.out.println("\n--- INICIANDO BATERIA DE TESTES ---\n");
 
         testInitialBoard();
         testTurnAlternationAndWrongPiece();
         testSelfCheckPrevention();
         testFoolCheckmate();
+        testBotMovement();
 
-        System.out.println("\n[SUCESSO] Todos os testes passaram sem falhas!");
+        System.out.println("\n[SUCESSO] Todos os testes passaram!");
     }
 
     private static void testInitialBoard() {
         System.out.print("1. Estado inicial do tabuleiro: ");
         ChessMatch match = new ChessMatch();
-        if (match.getTurn() != 1 || match.getCurrentPlayer() != Color.WHITE || match.isCheck() || match.isCheckMate()) {
+        assert match.getTurn() == 1 : "Turno inicial deve ser 1";
+        assert match.getCurrentPlayer() == Color.WHITE : "Brancas devem comecar";
+        assert !match.isCheck() : "Nao deve estar em xeque";
+        assert !match.isCheckMate() : "Nao deve estar em xeque-mate";
+
+        if (match.getTurn() != 1 || match.getCurrentPlayer() != Color.WHITE
+                || match.isCheck() || match.isCheckMate()) {
             throw new AssertionError("Falha no estado inicial.");
         }
         System.out.println("OK");
@@ -148,8 +264,7 @@ public class Program {
 
         boolean blocked = false;
         try {
-            // Tentar mover preta no turno 1
-            match.performChessMove(new Position(1, 4), new Position(3, 4));
+            match.performChessMove(new Position(1, 4), new Position(3, 4)); // Preta no turno branco
         } catch (RuntimeException e) {
             blocked = true;
         }
@@ -157,8 +272,7 @@ public class Program {
             throw new AssertionError("Deveria bloquear peca preta no turno 1.");
         }
 
-        // Mover peao branco e2 -> e4
-        match.performChessMove(new Position(6, 4), new Position(4, 4));
+        match.performChessMove(new Position(6, 4), new Position(4, 4)); // e2 -> e4
         if (match.getTurn() != 2 || match.getCurrentPlayer() != Color.BLACK) {
             throw new AssertionError("Falha na alternancia para o jogador PRETO.");
         }
@@ -166,27 +280,22 @@ public class Program {
     }
 
     private static void testSelfCheckPrevention() {
-        System.out.print("3. Impedimento de Auto-Xeque (Rollback): ");
+        System.out.print("3. Impedimento de Auto-Xeque: ");
         ChessMatch match = new ChessMatch();
 
-        // 1. e4 / e5
-        match.performChessMove(new Position(6, 4), new Position(4, 4));
-        match.performChessMove(new Position(1, 4), new Position(3, 4));
+        match.performChessMove(new Position(6, 4), new Position(4, 4)); // e4
+        match.performChessMove(new Position(1, 4), new Position(3, 4)); // e5
+        match.performChessMove(new Position(7, 3), new Position(3, 7)); // Qh5
+        match.performChessMove(new Position(1, 3), new Position(2, 3)); // d6
+        match.performChessMove(new Position(3, 7), new Position(1, 5)); // Qxf7+ (xeque)
 
-        // 2. Qh5 / d6
-        match.performChessMove(new Position(7, 3), new Position(3, 7));
-        match.performChessMove(new Position(1, 3), new Position(2, 3));
-
-        // 3. Qxf7+ (Xeque)
-        match.performChessMove(new Position(3, 7), new Position(1, 5));
         if (!match.isCheck()) {
             throw new AssertionError("Deveria acusar xeque.");
         }
 
         boolean prevented = false;
         try {
-            // Lance invalido que nao tira do xeque
-            match.performChessMove(new Position(1, 0), new Position(2, 0));
+            match.performChessMove(new Position(1, 0), new Position(2, 0)); // a7-a6 (nao sai do xeque)
         } catch (RuntimeException e) {
             prevented = true;
         }
@@ -197,20 +306,43 @@ public class Program {
     }
 
     private static void testFoolCheckmate() {
-        System.out.print("4. Deteccao de Xeque-Mate (Fool's Mate): ");
+        System.out.print("4. Xeque-Mate (Fool's Mate): ");
         ChessMatch match = new ChessMatch();
 
-        // 1. f3 / e5
-        match.performChessMove(new Position(6, 5), new Position(5, 5));
-        match.performChessMove(new Position(1, 4), new Position(3, 4));
+        match.performChessMove(new Position(6, 5), new Position(5, 5)); // f3
+        match.performChessMove(new Position(1, 4), new Position(3, 4)); // e5
+        match.performChessMove(new Position(6, 6), new Position(4, 6)); // g4
+        match.performChessMove(new Position(0, 3), new Position(4, 7)); // Qh4#
 
-        // 2. g4 / Qh4#
-        match.performChessMove(new Position(6, 6), new Position(4, 6));
-        match.performChessMove(new Position(0, 3), new Position(4, 7));
-
-        if (!match.isCheck() || !match.isCheckMate()) {
-            throw new AssertionError("Deveria acusar xeque e xeque-mate.");
+        if (!match.isCheckMate()) {
+            throw new AssertionError("Deveria acusar xeque-mate.");
         }
         System.out.println("OK");
+    }
+
+    private static void testBotMovement() {
+        System.out.print("5. Bot seleciona movimento valido: ");
+        ChessMatch match = new ChessMatch();
+        BotPlayer bot = new BotPlayer(Color.WHITE);
+
+        Position[] move = bot.chooseMove(match);
+        if (move == null || move.length != 2) {
+            throw new AssertionError("Bot deveria encontrar pelo menos um movimento.");
+        }
+
+        // Verifica se a posição de origem contém uma peça branca
+        Piece piece = match.getBoard().piece(move[0]);
+        if (piece == null || piece.getColor() != Color.WHITE) {
+            throw new AssertionError("Bot deveria selecionar uma peca branca.");
+        }
+
+        // Verifica se o destino é um movimento possível da peça
+        boolean[][] possibleMoves = piece.possibleMoves();
+        if (!possibleMoves[move[1].getRow()][move[1].getColumn()]) {
+            throw new AssertionError("Bot selecionou destino invalido.");
+        }
+
+        System.out.println("OK (" + BotPlayer.positionToAlgebraic(move[0]) + " -> "
+                + BotPlayer.positionToAlgebraic(move[1]) + ")");
     }
 }

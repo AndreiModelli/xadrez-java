@@ -46,6 +46,10 @@ public class ChessMatch {
         return board;
     }
 
+    public java.util.List<Piece> getCapturedPieces() {
+        return capturedPieces;
+    }
+
     // -------------------------------------------------------------------------
     // Execução da Jogada
     // -------------------------------------------------------------------------

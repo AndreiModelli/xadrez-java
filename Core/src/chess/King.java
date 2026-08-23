@@ -24,8 +24,8 @@ public class King extends Piece {
         Position p = new Position(0, 0);
 
         int[][] moves = {
-                {-1, 0}, {1, 0}, {0, -1}, {0, 1},
-                {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+                { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 },
+                { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 }
         };
 
         for (int[] move : moves) {

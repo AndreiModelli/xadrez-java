@@ -19,8 +19,8 @@ public class Queen extends Piece {
         Position p = new Position(0, 0);
 
         int[][] directions = {
-                {-1, 0}, {1, 0}, {0, -1}, {0, 1},
-                {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+                { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 },
+                { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 }
         };
 
         for (int[] dir : directions) {

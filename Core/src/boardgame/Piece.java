@@ -13,8 +13,13 @@ public abstract class Piece {
         this.position = null;
     }
 
-    public Color getColor() { return color; }
-    protected Board getBoard() { return board; }
+    public Color getColor() {
+        return color;
+    }
+
+    protected Board getBoard() {
+        return board;
+    }
 
     // Retorna uma matriz de booleans com as posições válidas para a peça
     public abstract boolean[][] possibleMoves();
@@ -27,7 +32,8 @@ public abstract class Piece {
         boolean[][] mat = possibleMoves();
         for (int i = 0; i < mat.length; i++) {
             for (int j = 0; j < mat[0].length; j++) {
-                if (mat[i][j]) return true;
+                if (mat[i][j])
+                    return true;
             }
         }
         return false;

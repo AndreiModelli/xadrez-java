@@ -18,7 +18,7 @@ public class Bishop extends Piece {
         boolean[][] mat = new boolean[getBoard().getRows()][getBoard().getColumns()];
         Position p = new Position(0, 0);
 
-        int[][] directions = {{-1, -1}, {-1, 1}, {1, 1}, {1, -1}};
+        int[][] directions = { { -1, -1 }, { -1, 1 }, { 1, 1 }, { 1, -1 } };
 
         for (int[] dir : directions) {
             p.setValues(position.getRow() + dir[0], position.getColumn() + dir[1]);

@@ -24,8 +24,8 @@ public class Knight extends Piece {
         Position p = new Position(0, 0);
 
         int[][] moves = {
-                {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2},
-                {1, -2}, {2, -1}, {2, 1}, {1, 2}
+                { -1, -2 }, { -2, -1 }, { -2, 1 }, { -1, 2 },
+                { 1, -2 }, { 2, -1 }, { 2, 1 }, { 1, 2 }
         };
 
         for (int[] move : moves) {

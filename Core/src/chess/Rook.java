@@ -1,4 +1,5 @@
 package chess;
+
 import boardgame.*;
 
 public class Rook extends Piece {

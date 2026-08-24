@@ -2,10 +2,20 @@ package chess;
 
 import boardgame.*;
 
+/**
+ * Peão - avança 1 casa (ou 2 no primeiro movimento), captura na diagonal.
+ * Movimento especial: En Passant.
+ *   - Quando um peão adversário avança 2 casas e fica ao lado deste peão,
+ *     este peão pode capturá-lo na diagonal como se tivesse avançado apenas 1 casa.
+ *   - Só pode ser feito imediatamente após o avanço duplo do adversário.
+ */
 public class Pawn extends Piece {
 
-    public Pawn(Board board, Color color) {
+    private ChessMatch chessMatch;
+
+    public Pawn(Board board, Color color, ChessMatch chessMatch) {
         super(board, color);
+        this.chessMatch = chessMatch;
     }
 
     @Override
@@ -43,6 +53,24 @@ public class Pawn extends Piece {
         p.setValues(position.getRow() + direction, position.getColumn() + 1);
         if (getBoard().positionExists(p) && isThereOpponentPiece(p)) {
             mat[p.getRow()][p.getColumn()] = true;
+        }
+
+        // En Passant
+        int enPassantRow = (getColor() == Color.WHITE) ? 3 : 4;
+        if (position.getRow() == enPassantRow) {
+            // En passant à esquerda
+            Position left = new Position(position.getRow(), position.getColumn() - 1);
+            if (getBoard().positionExists(left) && isThereOpponentPiece(left)
+                    && getBoard().piece(left) == chessMatch.getEnPassantVulnerable()) {
+                mat[position.getRow() + direction][position.getColumn() - 1] = true;
+            }
+
+            // En passant à direita
+            Position right = new Position(position.getRow(), position.getColumn() + 1);
+            if (getBoard().positionExists(right) && isThereOpponentPiece(right)
+                    && getBoard().piece(right) == chessMatch.getEnPassantVulnerable()) {
+                mat[position.getRow() + direction][position.getColumn() + 1] = true;
+            }
         }
 
         return mat;

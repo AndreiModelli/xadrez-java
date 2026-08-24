@@ -1,10 +1,10 @@
 package application;
 
 import boardgame.Board;
+import boardgame.Color;
 import boardgame.Piece;
 import boardgame.Position;
 import chess.ChessMatch;
-import chess.Color;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -37,6 +37,12 @@ public class Program {
                     System.out.println("\nPressione Enter para voltar ao menu...");
                     sc.nextLine();
                     break;
+                case "4":
+                    System.out.println("Abrindo modo grafico...");
+                    ChessGUI.launch();
+                    System.out.println("Modo grafico aberto. Pressione Enter para voltar ao menu...");
+                    sc.nextLine();
+                    break;
                 case "0":
                     System.out.println("Encerrando o programa. Ate logo!");
                     sc.close();
@@ -59,7 +65,7 @@ public class Program {
         System.out.println("\nPressione Enter para comecar...");
         sc.nextLine();
 
-        while (!match.isCheckMate()) {
+        while (!match.isCheckMate() && !match.isDraw()) {
             try {
                 UI.clearScreen();
                 UI.printMatch(match);
@@ -82,20 +88,35 @@ public class Program {
                     System.out.println("\n>> Peca capturada: " + captured);
                 }
 
+                // Verifica promoção de peão
+                if (match.getPromoted() != null) {
+                    System.out.println("\n>> PROMOCAO! Escolha a peca (Q=Rainha, R=Torre, B=Bispo, N=Cavalo): ");
+                    String promotionChoice = sc.nextLine().trim().toUpperCase();
+                    while (!promotionChoice.equals("Q") && !promotionChoice.equals("R")
+                            && !promotionChoice.equals("B") && !promotionChoice.equals("N")) {
+                        System.out.print("Opcao invalida. Digite Q, R, B ou N: ");
+                        promotionChoice = sc.nextLine().trim().toUpperCase();
+                    }
+                    match.replacePromotedPiece(promotionChoice);
+                }
+
             } catch (RuntimeException e) {
-                System.out.println("\n[ERRO] " + e.getMessage());
-                System.out.println("Pressione Enter para tentar novamente...");
-                sc.nextLine();
-            } catch (InputMismatchException e) {
                 System.out.println("\n[ERRO] " + e.getMessage());
                 System.out.println("Pressione Enter para tentar novamente...");
                 sc.nextLine();
             }
         }
 
-        // Fim de jogo por xeque-mate
+        // Fim de jogo
         UI.clearScreen();
         UI.printMatch(match);
+
+        if (match.isDraw()) {
+            System.out.println("\n========================================");
+            System.out.println("  EMPATE por insuficiencia material!");
+            System.out.println("========================================");
+        }
+
         System.out.println("\nPressione Enter para voltar ao menu...");
         sc.nextLine();
     }
@@ -128,7 +149,7 @@ public class Program {
         System.out.println("\nPressione Enter para comecar...");
         sc.nextLine();
 
-        while (!match.isCheckMate()) {
+        while (!match.isCheckMate() && !match.isDraw()) {
             try {
                 UI.clearScreen();
                 UI.printMatch(match);
@@ -146,6 +167,18 @@ public class Program {
                     }
 
                     match.performChessMove(moveInput.getSource(), moveInput.getTarget());
+
+                    // Promoção para jogador humano
+                    if (match.getPromoted() != null) {
+                        System.out.println("\n>> PROMOCAO! Escolha a peca (Q=Rainha, R=Torre, B=Bispo, N=Cavalo): ");
+                        String promotionChoice = sc.nextLine().trim().toUpperCase();
+                        while (!promotionChoice.equals("Q") && !promotionChoice.equals("R")
+                                && !promotionChoice.equals("B") && !promotionChoice.equals("N")) {
+                            System.out.print("Opcao invalida. Digite Q, R, B ou N: ");
+                            promotionChoice = sc.nextLine().trim().toUpperCase();
+                        }
+                        match.replacePromotedPiece(promotionChoice);
+                    }
 
                 } else {
                     // Vez do Bot
@@ -177,6 +210,12 @@ public class Program {
                             String to = BotPlayer.positionToAlgebraic(botMove[1]);
                             System.out.println("Bot jogou: " + from + " -> " + to);
 
+                            // Promoção automática do bot (sempre Rainha)
+                            if (match.getPromoted() != null) {
+                                match.replacePromotedPiece("Q");
+                                System.out.println("Bot promoveu peao para Rainha!");
+                            }
+
                         } catch (RuntimeException e) {
                             // Movimento inválido (auto-xeque), escolhe outro
                             botMove = bot.chooseMove(match);
@@ -200,16 +239,19 @@ public class Program {
                 System.out.println("\n[ERRO] " + e.getMessage());
                 System.out.println("Pressione Enter para tentar novamente...");
                 sc.nextLine();
-            } catch (InputMismatchException e) {
-                System.out.println("\n[ERRO] " + e.getMessage());
-                System.out.println("Pressione Enter para tentar novamente...");
-                sc.nextLine();
             }
         }
 
         // Fim de jogo
         UI.clearScreen();
         UI.printMatch(match);
+
+        if (match.isDraw()) {
+            System.out.println("\n========================================");
+            System.out.println("  EMPATE por insuficiencia material!");
+            System.out.println("========================================");
+        }
+
         System.out.println("\nPressione Enter para voltar ao menu...");
         sc.nextLine();
     }

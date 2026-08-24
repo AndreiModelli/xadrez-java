@@ -1,9 +1,9 @@
 package application;
 
 import boardgame.Board;
+import boardgame.Color;
 import boardgame.Piece;
 import chess.ChessMatch;
-import chess.Color;
 
 import java.util.List;
 
@@ -41,14 +41,17 @@ public class UI {
         System.out.println();
         System.out.println("Turno: " + match.getTurn());
 
-        if (!match.isCheckMate()) {
+        if (!match.isCheckMate() && !match.isDraw()) {
             System.out.println("Jogador atual: " + formatPlayer(match.getCurrentPlayer()));
             if (match.isCheck()) {
                 System.out.println(ANSI_RED + ">>> XEQUE! <<<" + ANSI_RESET);
             }
-        } else {
+        } else if (match.isCheckMate()) {
             System.out.println(ANSI_GREEN + ANSI_BOLD + "XEQUE-MATE!" + ANSI_RESET);
             System.out.println("Vencedor: " + formatPlayer(match.getCurrentPlayer()));
+        } else if (match.isDraw()) {
+            System.out.println(ANSI_YELLOW + ANSI_BOLD + "EMPATE!" + ANSI_RESET);
+            System.out.println("Insuficiencia material - nenhum jogador pode dar mate.");
         }
     }
 
@@ -179,6 +182,7 @@ public class UI {
         System.out.println("║  1 - Jogador vs Jogador (PvP)    ║");
         System.out.println("║  2 - Jogador vs Computador (Bot) ║");
         System.out.println("║  3 - Executar Testes             ║");
+        System.out.println("║  4 - Modo Grafico (Swing)        ║");
         System.out.println("║  0 - Sair                        ║");
         System.out.println("╚═══════════════════════════════════╝");
         System.out.print("Escolha: ");

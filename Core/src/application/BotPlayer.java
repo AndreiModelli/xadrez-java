@@ -1,10 +1,10 @@
 package application;
 
 import boardgame.Board;
+import boardgame.Color;
 import boardgame.Piece;
 import boardgame.Position;
 import chess.ChessMatch;
-import chess.Color;
 
 import java.util.ArrayList;
 import java.util.List;

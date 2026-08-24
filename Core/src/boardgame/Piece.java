@@ -1,16 +1,16 @@
 package boardgame;
 
-import chess.Color;
-
 public abstract class Piece {
     protected Position position;
     private Color color;
     private Board board;
+    private int moveCount;
 
     public Piece(Board board, Color color) {
         this.board = board;
         this.color = color;
         this.position = null;
+        this.moveCount = 0;
     }
 
     public Color getColor() {
@@ -19,6 +19,18 @@ public abstract class Piece {
 
     protected Board getBoard() {
         return board;
+    }
+
+    public int getMoveCount() {
+        return moveCount;
+    }
+
+    public void increaseMoveCount() {
+        moveCount++;
+    }
+
+    public void decreaseMoveCount() {
+        moveCount--;
     }
 
     // Retorna uma matriz de booleans com as posições válidas para a peça

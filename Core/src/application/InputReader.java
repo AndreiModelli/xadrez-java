@@ -5,19 +5,8 @@ import boardgame.Position;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-/**
- * Classe responsável por ler e interpretar a notação de movimentos do jogador.
- * Aceita formatos:
- *   - Separado: "e2" (origem) e depois "e4" (destino)
- *   - Concatenado: "e2e4" (origem e destino juntos)
- *   - Comandos especiais: "desistir", "quit", "sair"
- */
 public class InputReader {
 
-    /**
-     * Resultado da leitura de um movimento. Pode conter um movimento (origem/destino)
-     * ou um comando especial (desistência).
-     */
     public static class MoveInput {
         private Position source;
         private Position target;
@@ -54,24 +43,14 @@ public class InputReader {
         }
     }
 
-    /**
-     * Lê um movimento completo do jogador (origem e destino).
-     * Suporta entrada no formato "e2e4" (concatenado) ou separada.
-     * Também detecta comandos de desistência.
-     *
-     * @param sc Scanner para leitura do console
-     * @return MoveInput com as posições de origem/destino ou indicação de desistência
-     */
     public static MoveInput readMove(Scanner sc) {
         System.out.print("\nOrigem (ex: e2) ou 'desistir': ");
         String input = sc.nextLine().trim().toLowerCase();
 
-        // Verifica comandos de desistência
         if (isResignCommand(input)) {
             return MoveInput.resign();
         }
 
-        // Verifica formato concatenado (ex: "e2e4")
         if (input.length() == 4) {
             String sourcePart = input.substring(0, 2);
             String targetPart = input.substring(2, 4);
@@ -80,7 +59,6 @@ public class InputReader {
             return MoveInput.move(source, target);
         }
 
-        // Formato separado: primeira entrada é a origem
         Position source = parsePosition(input);
 
         System.out.print("Destino (ex: e4): ");
@@ -94,15 +72,6 @@ public class InputReader {
         return MoveInput.move(source, target);
     }
 
-    /**
-     * Converte uma string de notação algébrica (ex: "e2") para uma Position interna.
-     * A coluna 'a'-'h' mapeia para 0-7.
-     * A linha '1'-'8' mapeia para row = 8 - número (padrão de tabuleiro invertido).
-     *
-     * @param s String de 2 caracteres no formato coluna+linha (ex: "e2")
-     * @return Position correspondente na matriz interna
-     * @throws InputMismatchException se o formato for inválido
-     */
     public static Position parsePosition(String s) {
         if (s == null || s.length() != 2) {
             throw new InputMismatchException(
@@ -128,9 +97,6 @@ public class InputReader {
         return new Position(row, column);
     }
 
-    /**
-     * Verifica se o texto digitado é um comando de desistência.
-     */
     private static boolean isResignCommand(String input) {
         return input.equals("desistir") || input.equals("quit") || input.equals("sair");
     }

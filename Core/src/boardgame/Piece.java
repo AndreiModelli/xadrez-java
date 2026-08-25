@@ -33,7 +33,6 @@ public abstract class Piece {
         moveCount--;
     }
 
-    // Retorna uma matriz de booleans com as posições válidas para a peça
     public abstract boolean[][] possibleMoves();
 
     public boolean possibleMove(Position position) {

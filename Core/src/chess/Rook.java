@@ -18,7 +18,6 @@ public class Rook extends Piece {
         boolean[][] mat = new boolean[getBoard().getRows()][getBoard().getColumns()];
         Position p = new Position(0, 0);
 
-        // Acima
         p.setValues(position.getRow() - 1, position.getColumn());
         while (getBoard().positionExists(p) && !getBoard().thereIsAPiece(p)) {
             mat[p.getRow()][p.getColumn()] = true;
@@ -28,7 +27,6 @@ public class Rook extends Piece {
             mat[p.getRow()][p.getColumn()] = true;
         }
 
-        // Esquerda
         p.setValues(position.getRow(), position.getColumn() - 1);
         while (getBoard().positionExists(p) && !getBoard().thereIsAPiece(p)) {
             mat[p.getRow()][p.getColumn()] = true;
@@ -38,7 +36,6 @@ public class Rook extends Piece {
             mat[p.getRow()][p.getColumn()] = true;
         }
 
-        // Direita
         p.setValues(position.getRow(), position.getColumn() + 1);
         while (getBoard().positionExists(p) && !getBoard().thereIsAPiece(p)) {
             mat[p.getRow()][p.getColumn()] = true;
@@ -48,7 +45,6 @@ public class Rook extends Piece {
             mat[p.getRow()][p.getColumn()] = true;
         }
 
-        // Abaixo
         p.setValues(position.getRow() + 1, position.getColumn());
         while (getBoard().positionExists(p) && !getBoard().thereIsAPiece(p)) {
             mat[p.getRow()][p.getColumn()] = true;

@@ -7,13 +7,8 @@ import chess.ChessMatch;
 
 import java.util.List;
 
-/**
- * Classe responsável pela renderização da interface em modo texto (CLI).
- * Exibe o tabuleiro 8x8 em formato ASCII com coordenadas algébricas.
- */
 public class UI {
 
-    // Códigos ANSI para cores no terminal
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_YELLOW = "\u001B[33m";
     private static final String ANSI_CYAN = "\u001B[36m";
@@ -23,17 +18,11 @@ public class UI {
     private static final String ANSI_BG_GRAY = "\u001B[47m";
     private static final String ANSI_BLACK_TEXT = "\u001B[30m";
 
-    /**
-     * Limpa a tela do terminal (funciona na maioria dos terminais).
-     */
     public static void clearScreen() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
     }
 
-    /**
-     * Imprime o estado completo da partida: tabuleiro, peças capturadas, turno e status.
-     */
     public static void printMatch(ChessMatch match) {
         printBoard(match.getBoard());
         System.out.println();
@@ -55,10 +44,6 @@ public class UI {
         }
     }
 
-    /**
-     * Imprime o tabuleiro 8x8 com coordenadas (1-8 nas linhas, a-h nas colunas).
-     * Peças brancas em MAIÚSCULO, peças pretas em minúsculo.
-     */
     public static void printBoard(Board board) {
         System.out.println();
         System.out.println("    a   b   c   d   e   f   g   h");
@@ -78,9 +63,6 @@ public class UI {
         System.out.println("    a   b   c   d   e   f   g   h");
     }
 
-    /**
-     * Imprime o tabuleiro destacando os movimentos possíveis de uma peça.
-     */
     public static void printBoard(Board board, boolean[][] possibleMoves) {
         System.out.println();
         System.out.println("    a   b   c   d   e   f   g   h");
@@ -106,9 +88,6 @@ public class UI {
         System.out.println("    a   b   c   d   e   f   g   h");
     }
 
-    /**
-     * Imprime uma peça individual com cor apropriada.
-     */
     private static void printPiece(Piece piece) {
         if (piece == null) {
             System.out.print(".");
@@ -119,9 +98,6 @@ public class UI {
         }
     }
 
-    /**
-     * Imprime peça dentro de destaque (fundo cinza para movimentos possíveis).
-     */
     private static void printPieceHighlighted(Piece piece) {
         if (piece == null) {
             System.out.print("*");
@@ -132,9 +108,6 @@ public class UI {
         }
     }
 
-    /**
-     * Imprime as peças capturadas separadas por cor.
-     */
     public static void printCapturedPieces(ChessMatch match) {
         List<Piece> captured = match.getCapturedPieces();
         if (captured == null || captured.isEmpty()) {
@@ -160,9 +133,6 @@ public class UI {
         }
     }
 
-    /**
-     * Formata o nome do jogador com cor.
-     */
     private static String formatPlayer(Color color) {
         if (color == Color.WHITE) {
             return ANSI_CYAN + "BRANCAS" + ANSI_RESET;
@@ -171,9 +141,6 @@ public class UI {
         }
     }
 
-    /**
-     * Exibe o menu principal do jogo.
-     */
     public static void printMenu() {
         System.out.println();
         System.out.println("╔═══════════════════════════════════╗");
@@ -188,9 +155,6 @@ public class UI {
         System.out.print("Escolha: ");
     }
 
-    /**
-     * Exibe mensagem de boas-vindas com instruções.
-     */
     public static void printInstructions() {
         System.out.println();
         System.out.println("=== INSTRUCOES ===");

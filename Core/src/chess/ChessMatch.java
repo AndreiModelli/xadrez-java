@@ -9,14 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Motor principal do jogo de xadrez.
- * Gerencia turnos, validações, xeque/mate, e movimentos especiais:
- * - Roque (curto e longo)
- * - En Passant
- * - Promoção de peão
- * - Empate por insuficiência material
- */
 public class ChessMatch {
 
     private int turn;
@@ -39,9 +31,6 @@ public class ChessMatch {
         initialSetup();
     }
 
-    // -------------------------------------------------------------------------
-    // Getters
-    // -------------------------------------------------------------------------
     public int getTurn() {
         return turn;
     }
@@ -78,16 +67,12 @@ public class ChessMatch {
         return capturedPieces;
     }
 
-    // -------------------------------------------------------------------------
-    // Execução da Jogada
-    // -------------------------------------------------------------------------
     public Piece performChessMove(Position source, Position target) {
         validateSourcePosition(source);
         validateTargetPosition(source, target);
 
         Piece capturedPiece = makeMove(source, target);
 
-        // Se o jogador se colocou em xeque, desfaz a jogada
         if (testCheck(currentPlayer)) {
             undoMove(source, target, capturedPiece);
             throw new RuntimeException("Voce nao pode se colocar em xeque.");
@@ -95,7 +80,6 @@ public class ChessMatch {
 
         Piece movedPiece = board.piece(target);
 
-        // --- Promoção de Peão ---
         promoted = null;
         if (movedPiece instanceof Pawn) {
             int promotionRow = (movedPiece.getColor() == Color.WHITE) ? 0 : 7;
@@ -104,17 +88,14 @@ public class ChessMatch {
             }
         }
 
-        // Atualiza status de xeque para o oponente
         check = testCheck(opponent(currentPlayer));
 
-        // Verifica se o movimento resultou em xeque-mate
         if (testCheckMate(opponent(currentPlayer))) {
             checkMate = true;
         } else {
             nextTurn();
         }
 
-        // --- En Passant: marca peão vulnerável ---
         if (movedPiece instanceof Pawn
                 && Math.abs(target.getRow() - source.getRow()) == 2) {
             enPassantVulnerable = movedPiece;
@@ -122,7 +103,6 @@ public class ChessMatch {
             enPassantVulnerable = null;
         }
 
-        // --- Verifica empate por insuficiência material ---
         if (testInsufficientMaterial()) {
             draw = true;
         }
@@ -130,12 +110,6 @@ public class ChessMatch {
         return capturedPiece;
     }
 
-    /**
-     * Realiza a promoção do peão para a peça escolhida.
-     * Deve ser chamado após performChessMove quando getPromoted() != null.
-     *
-     * @param type Tipo da peça: "Q" (Rainha), "R" (Torre), "B" (Bispo), "N" (Cavalo)
-     */
     public void replacePromotedPiece(String type) {
         if (promoted == null) {
             throw new IllegalStateException("Nao ha peca para promover.");
@@ -155,7 +129,6 @@ public class ChessMatch {
 
         promoted = null;
 
-        // Recalcula xeque após promoção
         check = testCheck(opponent(currentPlayer));
         if (testCheckMate(opponent(currentPlayer))) {
             checkMate = true;
@@ -164,17 +137,19 @@ public class ChessMatch {
 
     private Piece createPromotedPiece(String type, Color color) {
         switch (type) {
-            case "Q": return new Queen(board, color);
-            case "R": return new Rook(board, color);
-            case "B": return new Bishop(board, color);
-            case "N": return new Knight(board, color);
-            default: return new Queen(board, color);
+            case "Q":
+                return new Queen(board, color);
+            case "R":
+                return new Rook(board, color);
+            case "B":
+                return new Bishop(board, color);
+            case "N":
+                return new Knight(board, color);
+            default:
+                return new Queen(board, color);
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Validações
-    // -------------------------------------------------------------------------
     private void validateSourcePosition(Position position) {
         if (!board.thereIsAPiece(position)) {
             throw new RuntimeException("Nao existe peca na posicao de origem.");
@@ -193,9 +168,6 @@ public class ChessMatch {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Simulação (Make / Undo) com movimentos especiais
-    // -------------------------------------------------------------------------
     private Piece makeMove(Position source, Position target) {
         Piece p = board.removePiece(source);
         p.increaseMoveCount();
@@ -207,7 +179,6 @@ public class ChessMatch {
             capturedPieces.add(capturedPiece);
         }
 
-        // --- Roque curto (rei move 2 casas para direita) ---
         if (p instanceof King && target.getColumn() == source.getColumn() + 2) {
             Position rookSource = new Position(source.getRow(), source.getColumn() + 3);
             Position rookTarget = new Position(source.getRow(), source.getColumn() + 1);
@@ -216,7 +187,6 @@ public class ChessMatch {
             board.placePiece(rook, rookTarget);
         }
 
-        // --- Roque longo (rei move 2 casas para esquerda) ---
         if (p instanceof King && target.getColumn() == source.getColumn() - 2) {
             Position rookSource = new Position(source.getRow(), source.getColumn() - 4);
             Position rookTarget = new Position(source.getRow(), source.getColumn() - 1);
@@ -225,10 +195,8 @@ public class ChessMatch {
             board.placePiece(rook, rookTarget);
         }
 
-        // --- En Passant (peão captura na diagonal sem peça no destino) ---
         if (p instanceof Pawn) {
             if (source.getColumn() != target.getColumn() && capturedPiece == null) {
-                // Captura en passant: a peça capturada está ao lado, não no destino
                 Position pawnPos;
                 if (p.getColor() == Color.WHITE) {
                     pawnPos = new Position(target.getRow() + 1, target.getColumn());
@@ -255,7 +223,6 @@ public class ChessMatch {
             piecesOnTheBoard.add(capturedPiece);
         }
 
-        // --- Desfaz Roque curto ---
         if (p instanceof King && target.getColumn() == source.getColumn() + 2) {
             Position rookSource = new Position(source.getRow(), source.getColumn() + 3);
             Position rookTarget = new Position(source.getRow(), source.getColumn() + 1);
@@ -264,7 +231,6 @@ public class ChessMatch {
             board.placePiece(rook, rookSource);
         }
 
-        // --- Desfaz Roque longo ---
         if (p instanceof King && target.getColumn() == source.getColumn() - 2) {
             Position rookSource = new Position(source.getRow(), source.getColumn() - 4);
             Position rookTarget = new Position(source.getRow(), source.getColumn() - 1);
@@ -273,7 +239,6 @@ public class ChessMatch {
             board.placePiece(rook, rookSource);
         }
 
-        // --- Desfaz En Passant ---
         if (p instanceof Pawn) {
             if (source.getColumn() != target.getColumn() && capturedPiece == enPassantVulnerable) {
                 Piece pawn = board.removePiece(target);
@@ -308,9 +273,6 @@ public class ChessMatch {
         return null;
     }
 
-    // -------------------------------------------------------------------------
-    // Xeque e Xeque-Mate
-    // -------------------------------------------------------------------------
     private Piece king(Color color) {
         List<Piece> list = piecesOnTheBoard.stream()
                 .filter(x -> x.getColor() == color)
@@ -374,17 +336,6 @@ public class ChessMatch {
         return true;
     }
 
-    // -------------------------------------------------------------------------
-    // Empate por Insuficiência Material
-    // -------------------------------------------------------------------------
-    /**
-     * Verifica se as peças restantes no tabuleiro são insuficientes para dar mate.
-     * Casos de empate:
-     *   - Rei vs Rei
-     *   - Rei + Bispo vs Rei
-     *   - Rei + Cavalo vs Rei
-     *   - Rei + Bispo vs Rei + Bispo (bispos na mesma cor de casa)
-     */
     private boolean testInsufficientMaterial() {
         List<Piece> whitePieces = piecesOnTheBoard.stream()
                 .filter(p -> p.getColor() == Color.WHITE)
@@ -394,12 +345,10 @@ public class ChessMatch {
                 .filter(p -> p.getColor() == Color.BLACK)
                 .collect(Collectors.toList());
 
-        // Rei vs Rei
         if (whitePieces.size() == 1 && blackPieces.size() == 1) {
             return true;
         }
 
-        // Rei + peça menor vs Rei
         if (whitePieces.size() == 1 && blackPieces.size() == 2) {
             for (Piece p : blackPieces) {
                 if (p instanceof Bishop || p instanceof Knight) {
@@ -415,16 +364,17 @@ public class ChessMatch {
             }
         }
 
-        // Rei + Bispo vs Rei + Bispo (mesma cor de casa)
         if (whitePieces.size() == 2 && blackPieces.size() == 2) {
             Piece whiteBishop = null;
             Piece blackBishop = null;
 
             for (Piece p : whitePieces) {
-                if (p instanceof Bishop) whiteBishop = p;
+                if (p instanceof Bishop)
+                    whiteBishop = p;
             }
             for (Piece p : blackPieces) {
-                if (p instanceof Bishop) blackBishop = p;
+                if (p instanceof Bishop)
+                    blackBishop = p;
             }
 
             if (whiteBishop != null && blackBishop != null) {
@@ -444,16 +394,12 @@ public class ChessMatch {
         return false;
     }
 
-    // -------------------------------------------------------------------------
-    // Setup Inicial
-    // -------------------------------------------------------------------------
     private void placeNewPiece(int row, int column, Piece piece) {
         board.placePiece(piece, new Position(row, column));
         piecesOnTheBoard.add(piece);
     }
 
     private void initialSetup() {
-        // Peças Pretas
         placeNewPiece(0, 0, new Rook(board, Color.BLACK));
         placeNewPiece(0, 1, new Knight(board, Color.BLACK));
         placeNewPiece(0, 2, new Bishop(board, Color.BLACK));
@@ -466,7 +412,6 @@ public class ChessMatch {
             placeNewPiece(1, j, new Pawn(board, Color.BLACK, this));
         }
 
-        // Peças Brancas
         placeNewPiece(7, 0, new Rook(board, Color.WHITE));
         placeNewPiece(7, 1, new Knight(board, Color.WHITE));
         placeNewPiece(7, 2, new Bishop(board, Color.WHITE));
